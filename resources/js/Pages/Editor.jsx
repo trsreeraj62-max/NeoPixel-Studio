@@ -81,25 +81,76 @@ export default function Editor({ auth }) {
         setFrames(newFrames);
     };
 
-    const handlePromptAnalyze = async () => {
-        if(!prompt) return;
+    const handlePromptAnalyze = async (text = prompt) => {
+        if(!text) return;
         setAiResponse("Analyzing prompt...");
         try {
-            const res = await fetch('/api/devices/1/prompt', {
+            const devId = 1; // Default
+            const r = await fetch(`/api/devices/${devId}/prompt`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
                 },
-                body: JSON.stringify({ prompt })
+                body: JSON.stringify({ prompt: text }),
+                credentials: 'include'
             });
-            const data = await res.json();
-            setAiResponse('AI Output: ' + JSON.stringify(data.animation));
+            const data = await r.json();
+            if (data.animation) {
+                setFrames(data.animation.frames);
+                setFps(data.animation.fps || 10);
+                setCurrentFrame(0);
+                setAiResponse('AI Output Applied: ' + (text.length > 20 ? text.substring(0,20)+'...' : text));
+            }
         } catch(e) {
             setAiResponse('Mock: Generated pattern based on prompt.');
             applyPreset('rainbow');
         }
+    };
+
+    const handleVoiceControl = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return alert("Speech recognition not supported.");
+        
+        const rec = new SpeechRecognition();
+        rec.onstart = () => setAiResponse("Listening...");
+        rec.onresult = (e) => {
+            const transcript = e.results[0][0].transcript;
+            setPrompt(transcript);
+            handlePromptAnalyze(transcript);
+        };
+        rec.start();
+    };
+
+    const handleBackup = () => {
+        const data = JSON.stringify({ frames, fps });
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `neopixel-backup-${Date.now()}.json`;
+        a.click();
+    };
+
+    const handleRestore = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data.frames) setFrames(data.frames);
+                if (data.fps) setFps(data.fps);
+                setCurrentFrame(0);
+                alert("Backup Restored Successfully!");
+            } catch(e) { alert("Invalid backup file."); }
+        };
+        reader.readAsText(file);
+    };
+
+    const handleExport = () => {
+        handleBackup();
     };
 
     return (
@@ -222,7 +273,8 @@ export default function Editor({ auth }) {
                         <div className="bg-white shadow-sm sm:rounded-lg p-6 border border-gray-200">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-gray-900 bg-gradient-to-r from-purple-500 to-indigo-500 bg-clip-text text-transparent">AI Scene Generator</h3>
-                                <button className="text-xl p-1 bg-gray-100 rounded-full hover:bg-indigo-100 transition" title="Voice Control" onClick={() => alert('Listening for voice commands...')}>🎙️</button>
+                                <button className="text-xl p-1 bg-gray-100 rounded-full hover:bg-indigo-100 transition" 
+                                    title="Voice Control" onClick={handleVoiceControl}>🎙️</button>
                             </div>
                             <textarea 
                                 className="w-full border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm resize-none text-sm p-3" 
@@ -232,7 +284,7 @@ export default function Editor({ auth }) {
                                 onChange={(e) => setPrompt(e.target.value)}
                             ></textarea>
                             <button 
-                                onClick={handlePromptAnalyze}
+                                onClick={() => handlePromptAnalyze()}
                                 className="mt-3 w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold shadow-md hover:shadow-lg transition-all"
                             >
                                 <span>✨</span> Generate Magic
@@ -257,8 +309,9 @@ export default function Editor({ auth }) {
                             <hr className="my-4 border-gray-200"/>
 
                             <div className="flex gap-2 mb-2">
-                                <PrimaryButton className="w-1/2 justify-center">Export</PrimaryButton>
-                                <PrimaryButton className="w-1/2 justify-center bg-green-600 hover:bg-green-700">Backup</PrimaryButton>
+                                <PrimaryButton className="w-1/2 justify-center" onClick={handleExport}>Export</PrimaryButton>
+                                <PrimaryButton className="w-1/2 justify-center bg-green-600 hover:bg-green-700" onClick={() => document.getElementById('restore-file').click()}>Restore</PrimaryButton>
+                                <input type="file" id="restore-file" className="hidden" accept=".json" onChange={handleRestore} />
                             </div>
                             <button className="w-full border border-gray-800 text-gray-800 py-2 rounded-md font-bold uppercase text-xs tracking-wider hover:bg-gray-800 hover:text-white transition">Full Sync to Device</button>
                         </div>

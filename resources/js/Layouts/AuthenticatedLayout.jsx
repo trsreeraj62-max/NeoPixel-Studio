@@ -13,6 +13,20 @@ export default function AuthenticatedLayout({ header, children }) {
     useEffect(() => {
         document.documentElement.classList.toggle('dark', theme === 'dark');
         localStorage.setItem('neopixel_theme', theme);
+        
+        // Persist to backend if possible
+        if (user) {
+            fetch('/api/settings/theme', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] || ''),
+                },
+                body: JSON.stringify({ theme }),
+                credentials: 'include'
+            }).catch(e => console.log('Theme sync failed', e));
+        }
     }, [theme]);
 
     const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
