@@ -149,6 +149,23 @@ export default function Editor({ auth }) {
         reader.readAsText(file);
     };
 
+    const handleFullSync = async () => {
+        const devId = 1; // Default
+        try {
+            await fetch(`/api/devices/${devId}/control`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                },
+                body: JSON.stringify({ command: { frames, fps, loop: true } }),
+                credentials: 'include'
+            });
+            alert("Animation Synced to Device!");
+        } catch(e) { alert("Sync failed."); }
+    };
+
     const handleExport = () => {
         handleBackup();
     };
@@ -313,7 +330,10 @@ export default function Editor({ auth }) {
                                 <PrimaryButton className="w-1/2 justify-center bg-green-600 hover:bg-green-700" onClick={() => document.getElementById('restore-file').click()}>Restore</PrimaryButton>
                                 <input type="file" id="restore-file" className="hidden" accept=".json" onChange={handleRestore} />
                             </div>
-                            <button className="w-full border border-gray-800 text-gray-800 py-2 rounded-md font-bold uppercase text-xs tracking-wider hover:bg-gray-800 hover:text-white transition">Full Sync to Device</button>
+                            <button onClick={handleFullSync}
+                                className="w-full border border-gray-800 text-gray-800 dark:text-gray-300 dark:border-gray-500 py-2 rounded-md font-bold uppercase text-xs tracking-wider hover:bg-gray-800 hover:text-white dark:hover:bg-gray-500 transition">
+                                Full Sync to Device
+                            </button>
                         </div>
                     </div>
                 </div>
