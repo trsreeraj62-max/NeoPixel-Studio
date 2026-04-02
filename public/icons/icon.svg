@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="128" fill="#6366f1"/>
+  <circle cx="128" cy="128" r="40" fill="#fff" opacity="0.3"/>
+  <circle cx="256" cy="128" r="40" fill="#fff" opacity="0.6"/>
+  <circle cx="384" cy="128" r="40" fill="#fff" opacity="0.9"/>
+  <circle cx="128" cy="256" r="40" fill="#fff" opacity="0.5"/>
+  <circle cx="256" cy="256" r="48" fill="#fff"/>
+  <circle cx="384" cy="256" r="40" fill="#fff" opacity="0.7"/>
+  <circle cx="128" cy="384" r="40" fill="#fff" opacity="0.1"/>
+  <circle cx="256" cy="384" r="40" fill="#fff" opacity="0.4"/>
+  <circle cx="384" cy="384" r="40" fill="#fff" opacity="0.2"/>
+  <text x="256" y="480" font-family="Arial" font-size="40" fill="#fff" text-anchor="middle" font-weight="bold">NEOPIXEL</text>
+</svg>
