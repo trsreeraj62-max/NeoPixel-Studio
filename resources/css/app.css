@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Dark mode smooth transition ── */
+html { transition: background-color 0.2s ease, color 0.2s ease; }
+
+/* ── Custom scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 3px; }
+
+/* ── LED glow animation ── */
+@keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 0 6px currentColor; }
+    50%       { box-shadow: 0 0 18px currentColor, 0 0 32px currentColor; }
+}
+.led-glow { animation: glow-pulse 1.5s ease-in-out infinite; }
+
+/* ── Bounce loading dots ── */
+@keyframes bounce3 {
+    0%, 80%, 100% { transform: scale(0); }
+    40%           { transform: scale(1); }
+}
+
+/* ── Canvas checkerboard background ── */
+.canvas-bg {
+    background-image: 
+        linear-gradient(45deg, #1a1a2e 25%, transparent 25%),
+        linear-gradient(-45deg, #1a1a2e 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1a1a2e 75%),
+        linear-gradient(-45deg, transparent 75%, #1a1a2e 75%);
+    background-size: 8px 8px;
+    background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+}
