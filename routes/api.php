@@ -35,6 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('devices', DeviceController::class);
     Route::post('/devices/{device}/control', [DeviceController::class, 'control']);
     Route::post('/devices/{device}/prompt',  [DeviceController::class, 'prompt']);
+    Route::post('/prompt',                   [DeviceController::class, 'promptGeneric']);
 
     Route::apiResource('animations',         AnimationController::class);
 

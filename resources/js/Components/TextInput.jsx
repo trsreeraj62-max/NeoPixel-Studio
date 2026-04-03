@@ -21,10 +21,11 @@ export default forwardRef(function TextInput(
             {...props}
             type={type}
             className={
-                'rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ' +
+                'rounded-lg bg-white/5 border-white/20 text-[#E0E0FF] shadow-sm transition-all focus:border-neon-purple focus:ring-neon-purple focus:bg-white/10 placeholder:text-white/20 ' +
                 className
             }
             ref={localRef}
         />
     );
 });
+

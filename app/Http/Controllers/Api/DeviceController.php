@@ -35,31 +35,73 @@ class DeviceController extends Controller
     }
 
     public function prompt(Request $request, Device $device) {
-        $v = $request->validate(['prompt' => 'required|string']);
-        $animation = $this->parsePromptToAnimation(strtolower($v['prompt']));
+        return $this->promptGeneric($request);
+    }
+
+    public function promptGeneric(Request $request) {
+        $v = $request->validate(['prompt' => 'required|string', 'size' => 'sometimes|integer|min:8|max:128']);
+        $gridSize = $v['size'] ?? 8;
+        $animation = $this->parsePromptToAnimation(strtolower($v['prompt']), $gridSize);
         \App\Models\PromptLog::create(['user_id' => $request->user()->id, 'prompt' => $v['prompt'], 'response_json' => $animation, 'status' => 'success']);
         return response()->json(['message' => 'Prompt processed', 'animation' => $animation]);
     }
 
-    private function parsePromptToAnimation(string $prompt): array {
+    private function parsePromptToAnimation(string $prompt, int $gridSize = 8): array {
         $frames = [];
+        $totalPixels = $gridSize * $gridSize;
+        
         if (str_contains($prompt, 'rainbow')) {
             $colors = ['#ff0000','#ff7f00','#ffff00','#00ff00','#0000ff','#4b0082','#9400d3'];
-            for ($f = 0; $f < 7; $f++) { $data = []; for ($i = 0; $i < 64; $i++) $data[] = $colors[($i + $f) % 7]; $frames[] = ['order' => $f + 1, 'duration' => 120, 'data' => $data]; }
+            for ($f = 0; $f < 7; $f++) { 
+                $data = []; 
+                for ($i = 0; $i < $totalPixels; $i++) {
+                    // diagonal mapping
+                    $row = (int)($i / $gridSize);
+                    $col = $i % $gridSize;
+                    $data[] = $colors[($col + $row + $f) % 7];
+                }
+                $frames[] = ['order' => $f + 1, 'duration' => 120, 'data' => $data]; 
+            }
         } elseif (str_contains($prompt, 'fire')) {
             $fireColors = ['#ff0000','#ff4500','#ff6600','#ff2200','#ff8800','#000000','#ff1100'];
-            for ($f = 0; $f < 5; $f++) { $data = array_map(fn() => $fireColors[array_rand($fireColors)], range(0, 63)); $frames[] = ['order' => $f + 1, 'duration' => 80, 'data' => $data]; }
+            for ($f = 0; $f < 5; $f++) { 
+                $data = array_map(fn() => $fireColors[array_rand($fireColors)], range(0, $totalPixels - 1)); 
+                $frames[] = ['order' => $f + 1, 'duration' => 80, 'data' => $data]; 
+            }
         } elseif (str_contains($prompt, 'wave')) {
-            for ($f = 0; $f < 8; $f++) { $data = array_fill(0, 64, '#000000'); for ($col = 0; $col < 8; $col++) { $row = (int) round(3.5 + 3 * sin(($col + $f) * M_PI / 4)); $row = max(0, min(7, $row)); $data[$row * 8 + $col] = '#00bfff'; } $frames[] = ['order' => $f + 1, 'duration' => 100, 'data' => $data]; }
+            for ($f = 0; $f < 8; $f++) { 
+                $data = array_fill(0, $totalPixels, '#000000'); 
+                for ($col = 0; $col < $gridSize; $col++) { 
+                    $row = (int) round(($gridSize/2 - 0.5) + ($gridSize/2.5) * sin(($col + $f) * M_PI / ($gridSize/2))); 
+                    $row = max(0, min($gridSize - 1, $row)); 
+                    $data[$row * $gridSize + $col] = '#00bfff'; 
+                } 
+                $frames[] = ['order' => $f + 1, 'duration' => 100, 'data' => $data]; 
+            }
         } elseif (str_contains($prompt, 'sparkle')) {
-            for ($f = 0; $f < 6; $f++) { $data = array_fill(0, 64, '#000000'); foreach (array_rand(array_fill(0, 64, 0), 10) as $idx) $data[$idx] = '#ffffff'; $frames[] = ['order' => $f + 1, 'duration' => 150, 'data' => $data]; }
+            for ($f = 0; $f < 6; $f++) { 
+                $data = array_fill(0, $totalPixels, '#000000'); 
+                $sparkles = min((int)($totalPixels * 0.1), 100);
+                foreach (array_rand(array_fill(0, $totalPixels, 0), $sparkles) as $idx) $data[$idx] = '#ffffff'; 
+                $frames[] = ['order' => $f + 1, 'duration' => 150, 'data' => $data]; 
+            }
         } elseif (str_contains($prompt, 'pulse')) {
             $pulseColors = ['#ff0000','#cc0000','#990000','#660000','#330000','#660000','#990000','#cc0000'];
-            for ($f = 0; $f < 8; $f++) $frames[] = ['order' => $f + 1, 'duration' => 100, 'data' => array_fill(0, 64, $pulseColors[$f])];
+            for ($f = 0; $f < 8; $f++) $frames[] = ['order' => $f + 1, 'duration' => 100, 'data' => array_fill(0, $totalPixels, $pulseColors[$f])];
         } elseif (str_contains($prompt, 'chase')) {
-            for ($f = 0; $f < 8; $f++) { $data = array_fill(0, 64, '#000000'); for ($i = 0; $i < 8; $i++) $data[($f + $i * 8) % 64] = '#ffff00'; $frames[] = ['order' => $f + 1, 'duration' => 100, 'data' => $data]; }
+            for ($f = 0; $f < 8; $f++) { 
+                $data = array_fill(0, $totalPixels, '#000000'); 
+                for ($i = 0; $i < $gridSize; $i++) {
+                    $index = ($f + $i * $gridSize) % $totalPixels;
+                    if ($index >= 0) $data[$index] = '#ffff00';
+                }
+                $frames[] = ['order' => $f + 1, 'duration' => 100, 'data' => $data]; 
+            }
         } else {
-            for ($f = 0; $f < 4; $f++) { $data = array_map(fn() => rand(0,1) ? '#'.dechex(rand(0,0xffffff)) : '#000000', range(0,63)); $frames[] = ['order' => $f + 1, 'duration' => 120, 'data' => $data]; }
+            for ($f = 0; $f < 4; $f++) { 
+                $data = array_map(fn() => rand(0,1) ? '#'.dechex(rand(0,0xffffff)) : '#000000', range(0, $totalPixels - 1)); 
+                $frames[] = ['order' => $f + 1, 'duration' => 120, 'data' => $data]; 
+            }
         }
         return ['frames' => $frames, 'fps' => 10, 'loop' => true];
     }

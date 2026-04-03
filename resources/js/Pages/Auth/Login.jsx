@@ -23,17 +23,22 @@ export default function Login({ status, canResetPassword }) {
 
     return (
         <GuestLayout>
-            <Head title="Log in" />
+            <Head title="Access Studio - NeoPixel" />
+
+            <div className="mb-8 text-center">
+                <h2 className="text-2xl font-black text-white tracking-tight">WELCOME BACK MASTER</h2>
+                <p className="text-xs text-[#E0E0FF]/40 font-bold uppercase tracking-widest mt-1">Initialize your pixel empire</p>
+            </div>
 
             {status && (
-                <div className="mb-4 text-sm font-medium text-green-600">
+                <div className="mb-4 text-sm font-bold text-neon-blue bg-neon-blue/10 p-3 rounded-lg border border-neon-blue/20">
                     {status}
                 </div>
             )}
 
-            <form onSubmit={submit}>
+            <form onSubmit={submit} className="space-y-6">
                 <div>
-                    <InputLabel htmlFor="email" value="Email" />
+                    <InputLabel htmlFor="email" value="Commander Email" />
 
                     <TextInput
                         id="email"
@@ -43,14 +48,15 @@ export default function Login({ status, canResetPassword }) {
                         className="mt-1 block w-full"
                         autoComplete="username"
                         isFocused={true}
+                        placeholder="your@studio.com"
                         onChange={(e) => setData('email', e.target.value)}
                     />
 
                     <InputError message={errors.email} className="mt-2" />
                 </div>
 
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
+                <div>
+                    <InputLabel htmlFor="password" value="Access Key" />
 
                     <TextInput
                         id="password"
@@ -59,14 +65,15 @@ export default function Login({ status, canResetPassword }) {
                         value={data.password}
                         className="mt-1 block w-full"
                         autoComplete="current-password"
+                        placeholder="••••••••"
                         onChange={(e) => setData('password', e.target.value)}
                     />
 
                     <InputError message={errors.password} className="mt-2" />
                 </div>
 
-                <div className="mt-4 block">
-                    <label className="flex items-center">
+                <div className="flex items-center justify-between">
+                    <label className="flex items-center group cursor-pointer">
                         <Checkbox
                             name="remember"
                             checked={data.remember}
@@ -74,27 +81,35 @@ export default function Login({ status, canResetPassword }) {
                                 setData('remember', e.target.checked)
                             }
                         />
-                        <span className="ms-2 text-sm text-gray-600">
-                            Remember me
+                        <span className="ms-2 text-xs font-bold text-[#E0E0FF]/50 uppercase tracking-widest transition-colors group-hover:text-neon-blue">
+                            Stay Synchronized
                         </span>
                     </label>
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
+                    
                     {canResetPassword && (
                         <Link
                             href={route('password.request')}
-                            className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            className="text-[10px] font-black text-neon-purple uppercase tracking-widest transition-colors hover:text-white"
                         >
-                            Forgot your password?
+                            Lost Access Code?
                         </Link>
                     )}
+                </div>
 
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Log in
+                <div className="pt-2">
+                    <PrimaryButton className="w-full" disabled={processing}>
+                        AUTHORIZE ENTRY
                     </PrimaryButton>
+                    
+                    <div className="mt-6 text-center">
+                        <span className="text-[10px] font-bold text-[#E0E0FF]/30 uppercase tracking-[0.15em]">New Creator? </span>
+                        <Link href={route('register')} className="text-[10px] font-black text-neon-blue uppercase tracking-widest ml-1 hover:underline">
+                            CREATE PORTAL
+                        </Link>
+                    </div>
                 </div>
             </form>
         </GuestLayout>
     );
 }
+

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 
@@ -12,40 +13,42 @@ export default function Devices({ auth }) {
     const [editId, setEditId] = useState(null);
     const [status, setStatus] = useState('');
 
-    const token = () => document.querySelector('meta[name="csrf-token"]')?.content;
-
-    const headers = {
-        'Content-Type': 'application/json',
-        'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] || ''),
-        'Accept': 'application/json',
-    };
-
     const loadDevices = async () => {
-        const r = await fetch('/api/devices', { headers, credentials: 'include' });
-        if (r.ok) setDevices(await r.json());
+        try {
+            const r = await axios.get('/api/devices');
+            setDevices(r.data);
+        } catch(e) { console.error(e); }
     };
 
     useEffect(() => { loadDevices(); }, []);
 
     const save = async () => {
         const url = editId ? `/api/devices/${editId}` : '/api/devices';
-        const method = editId ? 'PATCH' : 'POST';
-        const r = await fetch(url, { method, headers, credentials: 'include', body: JSON.stringify(form) });
-        if (r.ok) { setModal(false); setEditId(null); setForm({ name:'', type:'LED Strip', connection_type:'WiFi' }); loadDevices(); }
-        else setStatus('Error saving device.');
+        try {
+            if (editId) await axios.patch(url, form);
+            else await axios.post(url, form);
+            setModal(false); setEditId(null); setForm({ name:'', type:'LED Strip', connection_type:'WiFi' }); loadDevices();
+        } catch(e) {
+            setStatus('Error saving device.');
+        }
     };
 
     const remove = async (id) => {
         if (!confirm('Delete this device?')) return;
-        await fetch(`/api/devices/${id}`, { method: 'DELETE', headers, credentials: 'include' });
-        loadDevices();
+        try {
+            await axios.delete(`/api/devices/${id}`);
+            loadDevices();
+        } catch(e) { console.error(e); }
     };
 
     const sync = async (id) => {
-        const r = await fetch(`/api/devices/${id}/sync`, { credentials: 'include' });
-        const d = await r.json();
-        setStatus(`Synced ${d.synced ?? 0} commands to device.`);
-        loadDevices();
+        try {
+            const r = await axios.get(`/api/devices/${id}/sync`);
+            setStatus(`Synced ${r.data.synced ?? 0} commands to device.`);
+            loadDevices();
+        } catch(e) {
+            setStatus('Error syncing commands.');
+        }
         setTimeout(() => setStatus(''), 4000);
     };
 

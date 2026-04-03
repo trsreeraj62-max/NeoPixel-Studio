@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 
@@ -19,15 +20,17 @@ export default function Chat({ auth }) {
     const [loading, setLoading] = useState(false);
     const [devices, setDevices] = useState([]);
     const [selectedDevice, setSelectedDevice] = useState('');
+    const [selectedPreset, setSelectedPreset] = useState('');
     const [previewFrames, setPreviewFrames] = useState([]);
     const [playFrame, setPlayFrame] = useState(0);
     const chatRef = useRef(null);
 
     useEffect(() => {
-        fetch('/api/devices', {
-            headers: { 'Accept': 'application/json' },
-            credentials: 'include'
-        }).then(r => r.json()).then(d => { setDevices(d); if (d.length) setSelectedDevice(d[0].id); });
+        axios.get('/api/devices').then(r => {
+            const d = Array.isArray(r.data) ? r.data : [];
+            setDevices(d);
+            if (d.length) setSelectedDevice(d[0].id);
+        }).catch(err => console.error('Failed to load devices', err));
     }, []);
 
     useEffect(() => {
@@ -41,12 +44,6 @@ export default function Chat({ auth }) {
         return () => clearInterval(t);
     }, [previewFrames]);
 
-    const headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] || ''),
-    };
-
     const sendPrompt = async (text) => {
         if (!text.trim()) return;
         const userMsg = { role: 'user', text };
@@ -55,14 +52,9 @@ export default function Chat({ auth }) {
         setLoading(true);
 
         try {
-            const devId = selectedDevice || 1;
-            const r = await fetch(`/api/devices/${devId}/prompt`, {
-                method: 'POST',
-                headers,
-                credentials: 'include',
-                body: JSON.stringify({ prompt: text }),
-            });
-            const data = await r.json();
+            const url = selectedDevice ? `/api/devices/${selectedDevice}/prompt` : `/api/prompt`;
+            const r = await axios.post(url, { prompt: text });
+            const data = r.data;
             const animation = data.animation;
 
             setPreviewFrames(animation?.frames || []);
@@ -81,13 +73,23 @@ export default function Chat({ auth }) {
 
     const applyToDevice = async (animation) => {
         if (!selectedDevice) return alert('Select a device first!');
-        await fetch(`/api/devices/${selectedDevice}/control`, {
-            method: 'POST',
-            headers,
-            credentials: 'include',
-            body: JSON.stringify({ command: animation }),
-        });
-        setMessages(m => [...m, { role: 'assistant', text: '📡 Animation sent to device! It will auto-sync if device was offline.' }]);
+        try {
+            await axios.post(`/api/devices/${selectedDevice}/control`, { command: animation });
+            setMessages(m => [...m, { role: 'assistant', text: '📡 Animation sent to device! It will auto-sync if device was offline.' }]);
+        } catch (e) {
+            alert('Failed to send to device.');
+        }
+    };
+
+    const togglePreset = (prompt) => {
+        if (selectedPreset === prompt) {
+            setSelectedPreset('');
+            setInput('');
+        } else {
+            setSelectedPreset(prompt);
+            setInput(prompt);
+            sendPrompt(prompt);
+        }
     };
 
     return (
@@ -147,10 +149,10 @@ export default function Chat({ auth }) {
                     <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700 flex gap-3">
                         <input
                             value={input}
-                            onChange={e => setInput(e.target.value)}
+                            onChange={e => { setInput(e.target.value); setSelectedPreset(''); }}
                             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendPrompt(input)}
                             placeholder="Describe your animation... (e.g. blue fire wave)"
-                            className="flex-1 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+                            className="flex-1 border text-black dark:text-white border-gray-200 dark:border-gray-600 dark:bg-gray-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
                         />
                         <button onClick={() => sendPrompt(input)}
                             className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition shadow">
@@ -166,8 +168,12 @@ export default function Chat({ auth }) {
                         <h4 className="font-bold text-gray-700 dark:text-gray-200 mb-3 text-sm uppercase tracking-wider">Quick Presets</h4>
                         <div className="grid grid-cols-2 gap-2">
                             {PRESETS.map(p => (
-                                <button key={p.prompt} onClick={() => sendPrompt(p.prompt)}
-                                    className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-2 px-3 rounded-xl text-sm font-medium hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:border-indigo-300 hover:text-indigo-700 transition">
+                                <button key={p.prompt} onClick={() => togglePreset(p.prompt)}
+                                    className={`py-2 px-3 rounded-xl text-sm font-medium transition border ${
+                                        selectedPreset === p.prompt 
+                                        ? 'bg-indigo-100 border-indigo-400 text-indigo-700 dark:bg-indigo-900 dark:border-indigo-500 dark:text-indigo-200' 
+                                        : 'bg-gray-50 border-gray-200 text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:border-indigo-300 hover:text-indigo-700'
+                                    }`}>
                                     {p.label}
                                 </button>
                             ))}

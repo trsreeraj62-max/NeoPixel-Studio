@@ -25,9 +25,14 @@ export default function Register() {
         <GuestLayout>
             <Head title="Register" />
 
-            <form onSubmit={submit}>
+            <div className="mb-8 text-center">
+                <h2 className="text-2xl font-black text-white tracking-tight">BECOME A CREATOR</h2>
+                <p className="text-xs text-[#E0E0FF]/40 font-bold uppercase tracking-widest mt-1">Register your new portal</p>
+            </div>
+
+            <form onSubmit={submit} className="space-y-6">
                 <div>
-                    <InputLabel htmlFor="name" value="Name" />
+                    <InputLabel htmlFor="name" value="Creator Alias" />
 
                     <TextInput
                         id="name"
@@ -36,6 +41,7 @@ export default function Register() {
                         className="mt-1 block w-full"
                         autoComplete="name"
                         isFocused={true}
+                        placeholder="e.g. Master Builder"
                         onChange={(e) => setData('name', e.target.value)}
                         required
                     />
@@ -43,8 +49,8 @@ export default function Register() {
                     <InputError message={errors.name} className="mt-2" />
                 </div>
 
-                <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email" />
+                <div>
+                    <InputLabel htmlFor="email" value="Commander Email" />
 
                     <TextInput
                         id="email"
@@ -53,6 +59,7 @@ export default function Register() {
                         value={data.email}
                         className="mt-1 block w-full"
                         autoComplete="username"
+                        placeholder="your@studio.com"
                         onChange={(e) => setData('email', e.target.value)}
                         required
                     />
@@ -60,8 +67,8 @@ export default function Register() {
                     <InputError message={errors.email} className="mt-2" />
                 </div>
 
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
+                <div>
+                    <InputLabel htmlFor="password" value="Access Key" />
 
                     <TextInput
                         id="password"
@@ -70,6 +77,7 @@ export default function Register() {
                         value={data.password}
                         className="mt-1 block w-full"
                         autoComplete="new-password"
+                        placeholder="••••••••"
                         onChange={(e) => setData('password', e.target.value)}
                         required
                     />
@@ -77,10 +85,10 @@ export default function Register() {
                     <InputError message={errors.password} className="mt-2" />
                 </div>
 
-                <div className="mt-4">
+                <div>
                     <InputLabel
                         htmlFor="password_confirmation"
-                        value="Confirm Password"
+                        value="Confirm Access Key"
                     />
 
                     <TextInput
@@ -90,6 +98,7 @@ export default function Register() {
                         value={data.password_confirmation}
                         className="mt-1 block w-full"
                         autoComplete="new-password"
+                        placeholder="••••••••"
                         onChange={(e) =>
                             setData('password_confirmation', e.target.value)
                         }
@@ -102,17 +111,17 @@ export default function Register() {
                     />
                 </div>
 
-                <div className="mt-4 flex items-center justify-end">
-                    <Link
-                        href={route('login')}
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        Already registered?
-                    </Link>
-
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Register
+                <div className="pt-2">
+                    <PrimaryButton className="w-full" disabled={processing}>
+                        INITIALIZE PORTAL
                     </PrimaryButton>
+                    
+                    <div className="mt-6 text-center">
+                        <span className="text-[10px] font-bold text-[#E0E0FF]/30 uppercase tracking-[0.15em]">Already a Creator? </span>
+                        <Link href={route('login')} className="text-[10px] font-black text-neon-blue uppercase tracking-widest ml-1 hover:underline">
+                            AUTHORIZE ENTRY
+                        </Link>
+                    </div>
                 </div>
             </form>
         </GuestLayout>

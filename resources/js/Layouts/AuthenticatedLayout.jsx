@@ -36,8 +36,11 @@ export default function AuthenticatedLayout({ header, children }) {
         { href: route('devices'),   name: 'devices',   label: '💡 Devices' },
         { href: route('editor'),    name: 'editor',    label: '🎨 Editor' },
         { href: route('chat'),      name: 'chat',      label: '🤖 AI Chat' },
-        { href: route('admin'),     name: 'admin',     label: '🔰 Admin' },
     ];
+    
+    if (user && user.role === 'admin') {
+        navLinks.push({ href: route('admin'), name: 'admin', label: '🔰 Admin' });
+    }
 
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">

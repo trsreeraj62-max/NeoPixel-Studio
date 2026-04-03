@@ -7,23 +7,23 @@ export default function DeviceConnectionManager({ deviceId, onSync }) {
     const connectSerial = async () => {
         try {
             if (!('serial' in navigator)) {
-                alert("Web Serial API not supported in this browser.");
+                setStatus("Error: USB Serial not supported in this browser.");
                 return;
             }
             const port = await navigator.serial.requestPort();
             await port.open({ baudRate: 115200 });
-            setStatus("Connected via USB Serial");
+            setStatus("Connected via USB");
             // Simulate reading/writing thread
         } catch (error) {
             console.error(error);
-            setStatus("Serial Error: " + error.message);
+            setStatus("Error: " + error.message);
         }
     };
 
     const connectBluetooth = async () => {
         try {
             if (!('bluetooth' in navigator)) {
-                alert("Web Bluetooth API not supported.");
+                setStatus("Error: Bluetooth not supported.");
                 return;
             }
             const device = await navigator.bluetooth.requestDevice({
@@ -34,18 +34,17 @@ export default function DeviceConnectionManager({ deviceId, onSync }) {
             setStatus("Connected via Bluetooth");
         } catch (error) {
             console.error(error);
-            setStatus("Bluetooth Error: " + error.message);
+            setStatus("Error: " + error.message);
         }
     };
 
     const connectWebSocket = async () => {
-        // Fallback or explicit WebSocket (WiFi via backend)
-        setStatus("Connected via Cloud (WiFi/Socket)");
+        setStatus("Connected via Cloud");
     };
 
     return (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-            <h4 className="text-sm font-semibold mb-3 text-gray-700">Direct Hardware Connections</h4>
+            <h4 className="text-sm font-semibold mb-3 text-gray-700">Direct Connect</h4>
             <div className="flex gap-2">
                 <button 
                     onClick={connectSerial}
@@ -67,7 +66,7 @@ export default function DeviceConnectionManager({ deviceId, onSync }) {
                 </button>
             </div>
             {status !== "Disconnected" && (
-                <div className="mt-3 text-xs font-mono bg-black text-green-400 p-2 rounded">
+                <div className={`mt-3 text-xs font-mono p-2 rounded break-words ${status.includes('Error') ? 'bg-red-900 text-red-200' : 'bg-black text-green-400'}`}>
                     Status: {status}
                 </div>
             )}
